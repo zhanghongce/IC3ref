@@ -188,7 +188,7 @@ namespace IC3 {
   void printInvariant() {
     auto & flast = frames.back();
     std::ofstream fout("inv.cnf");
-    fout << "unsat" << endl;
+    fout << "unsat ";
     fout << flast.borderCubes.size() << endl;
     for( auto & clause : flast.borderCubes) {
       for (auto & lit : clause) {
