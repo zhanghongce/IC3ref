@@ -1,0 +1,6 @@
+*.o
+IC3
+aiger/*
+minisat/*
+.vscode/*
+
