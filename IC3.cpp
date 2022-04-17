@@ -23,6 +23,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <set>
 #include <sys/times.h>
 
@@ -186,11 +187,16 @@ namespace IC3 {
   
   void printInvariant() {
     auto & flast = frames.back();
+    std::ofstream fout("inv.cnf");
+    fout << "unsat" << endl;
+    fout << flast.borderCubes.size() << endl;
     for( auto & clause : flast.borderCubes) {
       for (auto & lit : clause) {
         cout << lit.x << " ";
+        fout << lit.x << " ";
       }
       cout << endl;
+      fout << endl;
     }
   }
 
@@ -863,7 +869,11 @@ namespace IC3 {
     }
     if (random) ic3.random = true;
     bool rv = ic3.check();
-    if (!rv && verbose > 1) ic3.printWitness();
+    if (!rv && verbose > 1) {
+      ic3.printWitness();
+      std::ofstream fout("inv.cnf");
+      fout << "sat" << endl;
+    }
     if (verbose) ic3.printStats();
     if (rv && verbose > 1) ic3.printInvariant();
     return rv;
