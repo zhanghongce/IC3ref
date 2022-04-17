@@ -108,7 +108,7 @@ public:
       vars.push_back(Var(ss.str()));
     }
     // same with primed error
-    _primedError = primeLit(_error);
+    _primedError = primeLit(_error); // make the bad state to the next state
     // same with primed constraints
     for (LitVec::const_iterator i = constraints.begin(); 
          i != constraints.end(); ++i)

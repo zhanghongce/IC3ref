@@ -183,6 +183,16 @@ namespace IC3 {
         }
       }
     }
+  
+  void printInvariant() {
+    auto & flast = frames.back();
+    for( auto & clause : flast.borderCubes) {
+      for (auto & lit : clause) {
+        cout << lit.x << " ";
+      }
+      cout << endl;
+    }
+  }
 
   private:
 
@@ -658,7 +668,7 @@ namespace IC3 {
     size_t generalize(size_t level, LitVec cube) {
       // generalize
       mic(level, cube);
-      // push
+      // push , HZ: try to push this to later frames
       do { ++level; } while (level <= k && consecution(level, cube));
       addCube(level, cube);
       return level;
@@ -666,7 +676,7 @@ namespace IC3 {
 
     size_t cexState;  // beginning of counterexample trace
 
-    // Process obligations according to priority.
+    // Process obligations according to priority. HZ: this is recursive_block
     bool handleObligations(PriorityQueue obls) {
       while (!obls.empty()) {
         PriorityQueue::iterator obli = obls.begin();
@@ -772,7 +782,7 @@ namespace IC3 {
           }
         }
         if (verbose > 1)
-          cout << i << " " << ckeep << " " << cprop << " " << cdrop << endl;
+          cout << "Pushing from F" << i << " ckeep:" << ckeep << " cprop:" << cprop << " cdrop" << cdrop << endl;
         if (fr.borderCubes.empty())
           return true;
       }
@@ -855,6 +865,7 @@ namespace IC3 {
     bool rv = ic3.check();
     if (!rv && verbose > 1) ic3.printWitness();
     if (verbose) ic3.printStats();
+    if (rv && verbose > 1) ic3.printInvariant();
     return rv;
   }
 
