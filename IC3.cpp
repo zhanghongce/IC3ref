@@ -830,7 +830,7 @@ namespace IC3 {
       if (numUpdates) cout << ". Avg lits/cls: " << numLits / numUpdates << endl;
     }
 
-    friend bool check(Model &, int, bool, bool);
+    friend bool check(Model &, int, bool, bool, bool);
 
   };
 
@@ -857,7 +857,7 @@ namespace IC3 {
   }
 
   // External function to make the magic happen.
-  bool check(Model & model, int verbose, bool basic, bool random) {
+  bool check(Model & model, int verbose, bool basic, bool random, bool dump) {
     if (!baseCases(model))
       return false;
     IC3 ic3(model);
@@ -871,11 +871,13 @@ namespace IC3 {
     bool rv = ic3.check();
     if (!rv && verbose > 1) {
       ic3.printWitness();
-      std::ofstream fout("inv.cnf");
-      fout << "sat" << endl;
+      if (dump) {
+        std::ofstream fout("inv.cnf");
+        fout << "sat" << endl;
+      }
     }
     if (verbose) ic3.printStats();
-    if (rv && verbose > 1) ic3.printInvariant();
+    if (rv && dump) ic3.printInvariant();
     return rv;
   }
 
