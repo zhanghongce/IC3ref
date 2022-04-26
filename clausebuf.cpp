@@ -1,5 +1,5 @@
 /*********************************************************************
-Copyright (c) 2013, Aaron Bradley
+Copyright (c) 2013, Hongce Zhang
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -21,21 +21,31 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 *********************************************************************/
 
-#ifndef IC3_h_INCLUDED
-#define IC3_h_INCLUDED
-
-#include "Model.h"
 #include "clausebuf.h"
 
-namespace IC3 {
+#include <fstream>
+#include <sstream>
+#include <string>
 
-  bool check(Model & model,
-             const ClauseBuf & clsbuf,
-             int verbose = 0,       // 0: silent, 1: stats, 2: informative
-             bool basic = false,    // simple inductive generalization
-             bool random = false,   // random runs for statistical profiling
-             bool dump = false);
+using namespace std;
 
+bool ClauseBuf::from_file(const char *fname) {
+    ifstream fin(fname);
+    if (!fin.is_open())
+        return false;
+
+    string tmp;
+    int n_clause;
+    fin >> tmp >> n_clause;
+    char buffer[512];
+    for (int idx = 0; idx < n_clause; ++ idx) {
+        clauses.push_back(std::vector<int>());
+        fin.getline(buffer, 512);
+        stringstream str(buffer);
+        int literal;
+        while(str >> literal) {
+            clauses.back().push_back(literal);
+        }
+    }
+    return true;
 }
-
-#endif

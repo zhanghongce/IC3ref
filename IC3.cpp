@@ -160,15 +160,38 @@ namespace IC3 {
       delete lifts;
     }
 
+    void insert_helper_clause(const ClauseBuf & clsbuf, int fidx) {
+      assert(fidx < frames.size());
+      auto & frame = frames.at(fidx);
+      auto slv = frame.consecution;
+      for (const auto & clause : clsbuf.clauses) {
+        vector<Minisat::Lit> cls;
+        for (int lit : clause) {
+          cls.push_back(Minisat::toLit(lit));
+        }
+        frame.borderCubes.emplace(cls);
+      }
+    }
+
     // The main loop.
-    bool check() {
+    bool check(const ClauseBuf & clsbuf) {
       startTime = time();  // stats
+      bool first_frame = true;
       while (true) {
         if (verbose > 1) cout << "Level " << k << endl;
         extend();                         // push frontier frame
+
         if (!strengthen()) return false;  // strengthen to remove bad successors
+
+        if (first_frame) {
+          first_frame = false;
+          insert_helper_clause(clsbuf, 1);
+        }        
+
         if (propagate()) return true;     // propagate clauses; check for proof
         printStats();
+
+
         ++k;                              // increment frontier
       }
     }
@@ -188,8 +211,8 @@ namespace IC3 {
   void printInvariant() {
     auto & flast = frames.back();
     std::ofstream fout("inv.cnf");
-    fout << "unsat" << endl;
-    fout << flast.borderCubes.size() << endl;
+    fout << "unsat " << flast.borderCubes.size() << " " << frames.size() << endl;
+    cout << "unsat " << flast.borderCubes.size() << " " << frames.size() << endl;
     for( auto & clause : flast.borderCubes) {
       for (auto & lit : clause) {
         cout << lit.x << " ";
@@ -830,7 +853,7 @@ namespace IC3 {
       if (numUpdates) cout << ". Avg lits/cls: " << numLits / numUpdates << endl;
     }
 
-    friend bool check(Model &, int, bool, bool, bool);
+    friend bool check(Model & model, const ClauseBuf & clsbuf, int verbose, bool basic, bool random, bool dump);
 
   };
 
@@ -857,7 +880,7 @@ namespace IC3 {
   }
 
   // External function to make the magic happen.
-  bool check(Model & model, int verbose, bool basic, bool random, bool dump) {
+  bool check(Model & model, const ClauseBuf & clsbuf, int verbose, bool basic, bool random, bool dump) {
     if (!baseCases(model))
       return false;
     IC3 ic3(model);
@@ -868,7 +891,7 @@ namespace IC3 {
       ic3.maxCTGs = 0;
     }
     if (random) ic3.random = true;
-    bool rv = ic3.check();
+    bool rv = ic3.check(clsbuf);
     if (!rv && verbose > 1) {
       ic3.printWitness();
       if (dump) {

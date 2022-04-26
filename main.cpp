@@ -30,12 +30,16 @@ extern "C" {
 }
 #include "IC3.h"
 #include "Model.h"
+#include "clausebuf.h"
 
 int main(int argc, char ** argv) {
   unsigned int propertyIndex = 0;
   bool basic = false, random = false;
   int verbose = 0;
   bool dump = false;
+  ClauseBuf clsbuf;
+  const char * fname = NULL;
+
   for (int i = 1; i < argc; ++i) {
     if (string(argv[i]) == "-v")
       // option: verbosity
@@ -53,6 +57,26 @@ int main(int argc, char ** argv) {
       // option: dump result to inv.cnf
       dump = true;
     }
+    else if (string(argv[i]) == "-f") {
+      // option: load frame from file
+      if (i+1 >= argc) {
+        cout << "missing frame buf file name for `-f`" << endl;
+        return 0;
+      }
+      bool res = clsbuf.from_file(argv[++i]);
+      if (!res) {
+        cout << "Unable to read from " << argv[i] << endl;
+        return 0;
+      }
+      cout << "Load " << clsbuf.clauses.size() << " clauses." << endl;
+    } else if (string(argv[i]) == "-i") {
+      // option: load aig from file
+      if (i+1 >= argc) {
+        cout << "missing aig name for `-i`" << endl;
+        return 0;
+      }
+      fname = argv[++i];
+    }
     else if (string(argv[i]) == "-b")
       // option: use basic generalization
       basic = true;
@@ -63,7 +87,13 @@ int main(int argc, char ** argv) {
 
   // read AIGER model
   aiger * aig = aiger_init();
-  const char * msg = aiger_read_from_file(aig, stdin);
+  const char * msg;
+  if (fname) {
+    msg = aiger_open_and_read_from_file(aig, fname);
+  } else {
+    msg = aiger_read_from_file(aig, stdin);
+  }
+
   if (msg) {
     cout << msg << endl;
     return 0;
@@ -74,7 +104,7 @@ int main(int argc, char ** argv) {
   if (!model) return 0;
 
   // model check it
-  bool rv = IC3::check(*model, verbose, basic, random, dump);
+  bool rv = IC3::check(*model, clsbuf,verbose, basic, random, dump);
   // print 0/1 according to AIGER standard
   cout << !rv << endl;
 
