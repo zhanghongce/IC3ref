@@ -163,7 +163,6 @@ namespace IC3 {
     void insert_helper_clause(const ClauseBuf & clsbuf, int fidx) {
       assert(fidx < frames.size());
       auto & frame = frames.at(fidx);
-      auto slv = frame.consecution;
       for (const auto & clause : clsbuf.clauses) {
         vector<Minisat::Lit> cls;
         for (int lit : clause) {
@@ -881,8 +880,13 @@ namespace IC3 {
 
   // External function to make the magic happen.
   bool check(Model & model, const ClauseBuf & clsbuf, int verbose, bool basic, bool random, bool dump) {
-    if (!baseCases(model))
+    if (!baseCases(model)) {
+      if (dump) {
+        std::ofstream fout("inv.cnf");
+        fout << "sat" << endl;
+      }
       return false;
+    }
     IC3 ic3(model);
     ic3.verbose = verbose;
     if (basic) {
@@ -894,10 +898,10 @@ namespace IC3 {
     bool rv = ic3.check(clsbuf);
     if (!rv && verbose > 1) {
       ic3.printWitness();
-      if (dump) {
+    }
+    if (!rv && dump) {
         std::ofstream fout("inv.cnf");
         fout << "sat" << endl;
-      }
     }
     if (verbose) ic3.printStats();
     if (rv && dump) ic3.printInvariant();
