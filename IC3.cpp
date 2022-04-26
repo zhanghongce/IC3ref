@@ -188,7 +188,7 @@ namespace IC3 {
   void printInvariant() {
     auto & flast = frames.back();
     std::ofstream fout("inv.cnf");
-    fout << "unsat" << endl;
+    fout << "unsat ";
     fout << flast.borderCubes.size() << endl;
     for( auto & clause : flast.borderCubes) {
       for (auto & lit : clause) {
@@ -858,8 +858,13 @@ namespace IC3 {
 
   // External function to make the magic happen.
   bool check(Model & model, int verbose, bool basic, bool random, bool dump) {
-    if (!baseCases(model))
+    if (!baseCases(model)) {
+      if (dump) {
+        std::ofstream fout("inv.cnf");
+        fout << "sat" << endl;
+      }
       return false;
+    }
     IC3 ic3(model);
     ic3.verbose = verbose;
     if (basic) {
@@ -871,10 +876,10 @@ namespace IC3 {
     bool rv = ic3.check();
     if (!rv && verbose > 1) {
       ic3.printWitness();
-      if (dump) {
+    }
+    if (!rv && dump) {
         std::ofstream fout("inv.cnf");
         fout << "sat" << endl;
-      }
     }
     if (verbose) ic3.printStats();
     if (rv && dump) ic3.printInvariant();
