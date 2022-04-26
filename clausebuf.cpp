@@ -23,6 +23,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "clausebuf.h"
 
+#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -33,10 +34,18 @@ bool ClauseBuf::from_file(const char *fname) {
     ifstream fin(fname);
     if (!fin.is_open())
         return false;
-
-    string tmp;
-    int n_clause;
-    fin >> tmp >> n_clause;
+    int n_clause = 0;
+    {
+        char header[128];
+        fin.getline(header, 128);
+        stringstream buf(header);
+        string tmp_unsat;
+        buf>>tmp_unsat;
+        buf>>n_clause;
+    }
+    if (n_clause <= 0)
+        return false;
+    
     char buffer[512];
     for (int idx = 0; idx < n_clause; ++ idx) {
         clauses.push_back(std::vector<int>());
@@ -46,6 +55,18 @@ bool ClauseBuf::from_file(const char *fname) {
         while(str >> literal) {
             clauses.back().push_back(literal);
         }
+        if (clauses.back().empty())
+            return false;
     }
     return true;
 }
+
+
+void ClauseBuf::dump() const {
+    for (const auto & cls : clauses) {
+        for (int lit : cls)
+            cout << lit << " ";
+        cout << endl;
+    }
+}
+

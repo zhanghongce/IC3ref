@@ -30,6 +30,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 struct ClauseBuf{
     std::vector<std::vector<int> > clauses;
     bool from_file(const char *fname);
+    void dump() const;
 };
 
 #endif

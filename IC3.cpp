@@ -160,15 +160,14 @@ namespace IC3 {
       delete lifts;
     }
 
-    void insert_helper_clause(const ClauseBuf & clsbuf, int fidx) {
+    void insert_helper_clause(const ClauseBuf & clsbuf, unsigned fidx) {
       assert(fidx < frames.size());
-      auto & frame = frames.at(fidx);
       for (const auto & clause : clsbuf.clauses) {
         vector<Minisat::Lit> cls;
         for (int lit : clause) {
           cls.push_back(Minisat::toLit(lit));
         }
-        frame.borderCubes.emplace(cls);
+        addCube(fidx, cls);
       }
     }
 
@@ -180,12 +179,12 @@ namespace IC3 {
         if (verbose > 1) cout << "Level " << k << endl;
         extend();                         // push frontier frame
 
-        if (!strengthen()) return false;  // strengthen to remove bad successors
-
         if (first_frame) {
           first_frame = false;
           insert_helper_clause(clsbuf, 1);
-        }        
+        }
+
+        if (!strengthen()) return false;  // strengthen to remove bad successors
 
         if (propagate()) return true;     // propagate clauses; check for proof
         printStats();

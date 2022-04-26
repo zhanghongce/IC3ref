@@ -69,6 +69,8 @@ int main(int argc, char ** argv) {
         return 0;
       }
       cout << "Load " << clsbuf.clauses.size() << " clauses." << endl;
+      if (dump)
+        clsbuf.dump();
     } else if (string(argv[i]) == "-i") {
       // option: load aig from file
       if (i+1 >= argc) {

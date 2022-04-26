@@ -3,4 +3,7 @@ IC3
 aiger/*
 minisat/*
 .vscode/*
+*.txt
+inv.cnf
+minisat/*
 
