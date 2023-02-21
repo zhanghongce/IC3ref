@@ -132,6 +132,7 @@ namespace IC3 {
   class IC3 {
   public:
     IC3(Model & _model) :
+      inductive_frame(-1),
       verbose(0), random(false), model(_model), k(1), nextState(0),
       litOrder(), slimLitOrder(),
       numLits(0), numUpdates(0), maxDepth(1), maxCTGs(3),
@@ -207,7 +208,10 @@ namespace IC3 {
     }
   
   void printInvariant() {
-    auto & flast = frames.back();
+    // HZ: IC3 might terminate while propagation (when all pushed)
+    //     so it might not be appropriate to use the last frame
+    auto & flast = (inductive_frame != -1) ? frames.at(inductive_frame+1) : frames.back();
+    cout << "unsat frame is #" << inductive_frame << endl;
     std::ofstream fout("inv.cnf");
     fout << "unsat " << flast.borderCubes.size() << " " << frames.size() << endl;
     cout << "unsat " << flast.borderCubes.size() << " " << frames.size() << endl;
@@ -221,6 +225,7 @@ namespace IC3 {
     }
   }
 
+    int inductive_frame;
   private:
 
     int verbose; // 0: silent, 1: stats, 2: all
@@ -810,15 +815,17 @@ namespace IC3 {
         }
         if (verbose > 1)
           cout << "Pushing from F" << i << " ckeep:" << ckeep << " cprop:" << cprop << " cdrop" << cdrop << endl;
-        if (fr.borderCubes.empty())
+        if (fr.borderCubes.empty()) {
+          inductive_frame = i; // HZ: record the frame that got all propagated
           return true;
+        }
       }
       // 3. simplify frames
       for (size_t i = trivial ? k : 1; i <= k+1; ++i)
         frames[i].consecution->simplify();
       lifts->simplify();
       return false;
-    }
+    } // end of propagate
 
     int nQuery, nCTI, nCTG, nmic;
     clock_t startTime, satTime;
