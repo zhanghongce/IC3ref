@@ -134,7 +134,7 @@ namespace IC3 {
     IC3(Model & _model) :
       inductive_frame(-1),
       verbose(0), random(false), model(_model), k(1), nextState(0),
-      litOrder(), slimLitOrder(),
+      litOrder(), slimLitOrder(model),
       numLits(0), numUpdates(0), maxDepth(1), maxCTGs(3),
       maxJoins(1<<20), micAttempts(3), cexState(0), nQuery(0), nCTI(0), nCTG(0),
       nmic(0), satTime(0), nCoreReduced(0), nAbortJoin(0), nAbortMic(0)
@@ -384,8 +384,8 @@ namespace IC3 {
 
     struct SlimLitOrder {
       HeuristicLitOrder *heuristicLitOrder;
-
-      SlimLitOrder() {}
+      Model &model;
+      SlimLitOrder(Model & m): model(m) {}
 
       bool operator()(const Minisat::Lit & l1, const Minisat::Lit & l2) const {
         // l1, l2 must be unprimed
@@ -393,6 +393,12 @@ namespace IC3 {
         if (i2 >= heuristicLitOrder->counts.size()) return false;
         size_t i1 = (size_t) Minisat::toInt(Minisat::var(l1));
         if (i1 >= heuristicLitOrder->counts.size()) return true;
+        bool is_i1_ctrl = model.control_vars.find(i1) != model.control_vars.end();
+        bool is_i2_ctrl = model.control_vars.find(i2) != model.control_vars.end();
+        if(is_i1_ctrl && !is_i2_ctrl)
+          return false; // i1 > i2
+        if(!is_i1_ctrl && is_i2_ctrl)
+          return true; // i1 < i2
         return (heuristicLitOrder->counts[i1] < heuristicLitOrder->counts[i2]);
       }
     } slimLitOrder;

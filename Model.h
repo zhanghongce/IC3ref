@@ -27,6 +27,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <algorithm>
 #include <set>
 #include <sstream>
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 
@@ -92,6 +93,7 @@ public:
   // functions, the error, and the AND table, closely reflecting the
   // AIGER format.  Easier to use "modelFromAiger()", below.
   Model(vector<Var> _vars, 
+        unordered_set<int> control_vars,
         size_t _inputs, size_t _latches, size_t _reps, 
         LitVec _init, LitVec _constraints, LitVec _nextStateFns, 
         Minisat::Lit _err, AigVec _aig) :
@@ -213,6 +215,9 @@ public:
 
 private:
   VarVec vars;
+public:
+  unordered_set<int> control_vars;
+private:
   const size_t inputs, latches, reps, primes;
 
   bool primesUnlocked;
@@ -232,7 +237,6 @@ private:
   LitSet initLits;
 
   Minisat::SimpSolver * sslv;
-
 };
 
 // The easiest way to create a model.

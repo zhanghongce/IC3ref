@@ -267,11 +267,20 @@ Model * modelFromAiger(aiger * aig, unsigned int propertyIndex) {
   VarVec vars(1, Var("false"));
   LitVec init, constraints, nextStateFns;
 
+  unordered_set<int> control_vars;
+  unordered_set<string> control_var_names; // TODO: load this
+
   // declare primary inputs and latches
   for (size_t i = 0; i < aig->num_inputs; ++i)
     vars.push_back(var(aig->inputs, i, 'i'));
-  for (size_t i = 0; i < aig->num_latches; ++i)
+  for (size_t i = 0; i < aig->num_latches; ++i) {
     vars.push_back(var(aig->latches, i, 'l'));
+    auto name = vars.back().name();
+    auto pos = name.find('[');
+    name = name.substr(0,pos);
+    if(control_var_names.find(name) != control_var_names.end())
+      control_vars.insert(vars.back().var());
+  }
 
   // the AND section
   AigVec aigv;
@@ -315,7 +324,7 @@ Model * modelFromAiger(aiger * aig, unsigned int propertyIndex) {
     : lit(vars, aig->outputs[propertyIndex].lit);
 
   size_t offset = 0;
-  return new Model(vars, 
+  return new Model(vars, control_vars,
                    offset += 1, offset += aig->num_inputs, 
                    offset + aig->num_latches,
                    init, constraints, nextStateFns, err, aigv);
