@@ -31,6 +31,7 @@ struct ClauseBuf{
     std::vector<std::vector<int> > clauses;
     bool from_file(const char *fname);
     void dump() const;
+    void dump(const char *fname) const;
 };
 
 #endif

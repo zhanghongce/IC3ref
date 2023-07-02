@@ -70,3 +70,18 @@ void ClauseBuf::dump() const {
     }
 }
 
+void ClauseBuf::dump(const char * fname) const {
+    std::ofstream fout(fname);
+    if (!fout.is_open()) {
+      std::cout << "unable to write to " << fname << std::endl;
+      return;
+    }
+    
+    fout << "unsat " << clauses.size() << " " << 0 << endl;
+    for (const auto & cls : clauses) {
+        for (int lit : cls)
+            fout << lit << " ";
+        fout << endl;
+    }
+}
+
