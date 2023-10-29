@@ -70,3 +70,16 @@ void ClauseBuf::dump() const {
     }
 }
 
+bool OrderBuf::from_file(const char *fname) {
+    ifstream fin(fname);
+    if (!fin.is_open())
+        return false;
+    int n_size = 0;
+    unsigned lit,cnt;
+    fin>>n_size;
+    for (int idx = 0; idx < n_size; ++ idx) {
+        fin >> lit >> cnt;
+        pre_est_var_order[(lit >> 1)] = cnt;
+    }
+    return true;
+}

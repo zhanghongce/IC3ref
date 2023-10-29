@@ -131,10 +131,10 @@ namespace IC3 {
 
   class IC3 {
   public:
-    IC3(Model & _model) :
+    IC3(Model & _model, const OrderBuf & odbuf) :
       inductive_frame(-1),
       verbose(0), random(false), model(_model), k(1), nextState(0),
-      litOrder(), slimLitOrder(),
+      litOrder(), slimLitOrder(odbuf),
       numLits(0), numUpdates(0), maxDepth(1), maxCTGs(3),
       maxJoins(1<<20), micAttempts(3), cexState(0), nQuery(0), nCTI(0), nCTG(0),
       nmic(0), satTime(0), nCoreReduced(0), nAbortJoin(0), nAbortMic(0)
@@ -384,15 +384,26 @@ namespace IC3 {
 
     struct SlimLitOrder {
       HeuristicLitOrder *heuristicLitOrder;
+      const OrderBuf & pre_est_var_order;
 
-      SlimLitOrder() {}
+      SlimLitOrder(const OrderBuf & od) : pre_est_var_order(od) {}
 
       bool operator()(const Minisat::Lit & l1, const Minisat::Lit & l2) const {
         // l1, l2 must be unprimed
+
         size_t i2 = (size_t) Minisat::toInt(Minisat::var(l2));
-        if (i2 >= heuristicLitOrder->counts.size()) return false;
         size_t i1 = (size_t) Minisat::toInt(Minisat::var(l1));
+
+        auto o2 = pre_est_var_order.get_order(i2);
+        auto o1 = pre_est_var_order.get_order(i1);
+        if(o1 < o2)
+          return true;
+        if(o1 > o2)
+          return false;
+
+        if (i2 >= heuristicLitOrder->counts.size()) return false;
         if (i1 >= heuristicLitOrder->counts.size()) return true;
+
         return (heuristicLitOrder->counts[i1] < heuristicLitOrder->counts[i2]);
       }
     } slimLitOrder;
@@ -858,7 +869,7 @@ namespace IC3 {
       if (numUpdates) cout << ". Avg lits/cls: " << numLits / numUpdates << endl;
     }
 
-    friend bool check(Model & model, const ClauseBuf & clsbuf, int verbose, bool basic, bool random, bool dump);
+    friend bool check(Model & model, const ClauseBuf & clsbuf, const OrderBuf & odbuf, int verbose, bool basic, bool random, bool dump);
 
   };
 
@@ -885,7 +896,8 @@ namespace IC3 {
   }
 
   // External function to make the magic happen.
-  bool check(Model & model, const ClauseBuf & clsbuf, int verbose, bool basic, bool random, bool dump) {
+  bool check(Model & model, const ClauseBuf & clsbuf, const OrderBuf &odbuf, 
+      int verbose, bool basic, bool random, bool dump) {
     if (!baseCases(model)) {
       if (dump) {
         std::ofstream fout("inv.cnf");
@@ -893,7 +905,7 @@ namespace IC3 {
       }
       return false;
     }
-    IC3 ic3(model);
+    IC3 ic3(model, odbuf);
     ic3.verbose = verbose;
     if (basic) {
       ic3.maxDepth = 0;

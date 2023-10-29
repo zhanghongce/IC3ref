@@ -38,6 +38,7 @@ int main(int argc, char ** argv) {
   int verbose = 0;
   bool dump = false;
   ClauseBuf clsbuf;
+  OrderBuf odbuf;
   const char * fname = NULL;
 
   for (int i = 1; i < argc; ++i) {
@@ -71,6 +72,18 @@ int main(int argc, char ** argv) {
       cout << "Load " << clsbuf.clauses.size() << " clauses." << endl;
       if (dump)
         clsbuf.dump();
+    } else if (string(argv[i]) == "-p") {
+      // option: load order from file
+      if (i+1 >= argc) {
+        cout << "missing spec order file name for `-p`" << endl;
+        return 0;
+      }
+      bool res = odbuf.from_file(argv[++i]);
+      if (!res) {
+        cout << "Unable to read from " << argv[i] << endl;
+        return 0;
+      }
+      cout << "Load " << odbuf.pre_est_var_order.size() << " variable occurrance count." << endl;
     } else if (string(argv[i]) == "-i") {
       // option: load aig from file
       if (i+1 >= argc) {
@@ -106,7 +119,7 @@ int main(int argc, char ** argv) {
   if (!model) return 0;
 
   // model check it
-  bool rv = IC3::check(*model, clsbuf,verbose, basic, random, dump);
+  bool rv = IC3::check(*model, clsbuf, odbuf, verbose, basic, random, dump);
   // print 0/1 according to AIGER standard
   cout << !rv << endl;
 
