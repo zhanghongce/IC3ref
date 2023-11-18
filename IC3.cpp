@@ -140,6 +140,7 @@ namespace IC3 {
       nmic(0), satTime(0), nCoreReduced(0), nAbortJoin(0), nAbortMic(0)
     {
       slimLitOrder.heuristicLitOrder = &litOrder;
+      slimLitOrderOrdinary.heuristicLitOrder = &litOrder;
 
       // construct lifting solver
       lifts = model.newSolver();
@@ -382,6 +383,25 @@ namespace IC3 {
       }
     } litOrder;
 
+
+    struct SlimLitOrderOrdinary { // the old one
+      HeuristicLitOrder *heuristicLitOrder;
+
+      SlimLitOrderOrdinary()  {}
+
+      bool operator()(const Minisat::Lit & l1, const Minisat::Lit & l2) const {
+        // l1, l2 must be unprimed
+
+        size_t i2 = (size_t) Minisat::toInt(Minisat::var(l2));
+        if (i2 >= heuristicLitOrder->counts.size()) return false;
+
+        size_t i1 = (size_t) Minisat::toInt(Minisat::var(l1));
+        if (i1 >= heuristicLitOrder->counts.size()) return true;
+
+        return (heuristicLitOrder->counts[i1] < heuristicLitOrder->counts[i2]);
+      }
+    } slimLitOrderOrdinary;
+
     struct SlimLitOrder {
       HeuristicLitOrder *heuristicLitOrder;
       const OrderBuf & pre_est_var_order;
@@ -421,11 +441,15 @@ namespace IC3 {
       stable_sort(cube.begin(), cube.end(), slimLitOrder);
     }
 
+    void orderCubeOrdinary(LitVec & cube) {
+      stable_sort(cube.begin(), cube.end(), slimLitOrderOrdinary);
+    }
+
     typedef Minisat::vec<Minisat::Lit> MSLitVec;
 
     // Orders assumptions for Minisat.
     void orderAssumps(MSLitVec & cube, bool rev, int start = 0) {
-      stable_sort(cube + start, cube + cube.size(), slimLitOrder);
+      stable_sort(cube + start, cube + cube.size(), slimLitOrderOrdinary);
       if (rev) reverse(cube + start, cube + cube.size());
     }
 
@@ -649,7 +673,12 @@ namespace IC3 {
       ++nmic;  // stats
       // try dropping each literal in turn
       size_t attempts = micAttempts;
-      orderCube(cube);
+      
+      if (frames.size() < 10)
+        orderCubeOrdinary(cube);
+      else
+        orderCube(cube);
+
       for (size_t i = 0; i < cube.size();) {
         LitVec cp(cube.begin(), cube.begin() + i);
         cp.insert(cp.end(), cube.begin() + i+1, cube.end());
