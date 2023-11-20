@@ -1,6 +1,7 @@
 #pragma once
 
 #include "smt-switch/smt.h"
+#include "smt-switch/utils.h"
 #include "smt-switch/boolector_factory.h"
 
 
@@ -17,6 +18,18 @@ class PonoException : public std::exception {
     PonoException(const std::string & m) : msg(m) { }
 };
 
+
+struct ctiModel {
+  std::vector<smt::Term> vars;
+  std::vector<smt::Term> vals;
+  bool equal(const ctiModel & other)  const ;
+  void reduce_vars(smt::SmtSolver & old, smt::UnsatCoreReducer & reducer_solver, const smt::Term & prop) ;
+  ctiModel(smt::SmtSolver & s, const smt::TermVec & v);
+  smt::Term get_exp(smt::SmtSolver & s) const ;
+  std::string get_vals() const ;
+  std::string get_vars() const ;
+};
+int sample_cti(TransitionSystem & ts, int sample_count, std::vector<ctiModel> & out);
 
 void filter_clauses(const ClauseBuf & in, ClauseBuf & out, TransitionSystem & ts);
 bool is_ts_trivially_unsafe(TransitionSystem & ts) ;

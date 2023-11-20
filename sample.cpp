@@ -97,14 +97,21 @@ int main(int argc, char ** argv) {
     bufout.dump(outframebuf);
 
     std::cout << "Write " << bufout.clauses.size() << " clauses to " << outframebuf << std::endl;
+    aiger_reset(aig);
+    return 0;
   }
 
   if(sampling_cex) {
-    ClauseBuf buf;
-    buf.from_file(framebuf);
+    //  ClauseBuf buf;
+    //buf.from_file(framebuf);
     // then sample for N models with clausebuf
-  } else {
+    // } else {
     // random sampling
+    TransitionSystem ts(aig, 0);
+    std::vector<ctiModel> m;
+    auto ret = sample_cti(ts, 100, m);
+    std::cout << "Total samples: "<< ret << std::endl;
+    // sample model: P /\ T /\ neg P'
   }
   
   aiger_reset(aig);
